@@ -7,7 +7,7 @@ This is where I will put your DOI tag once all has been finalized
 ## Contact
 For questions please contact:
 
-Hongyi Li: <I need your new email address that you would like to have listed>
+Hongyi Li: I need your new email address that you would like to have listed
 
 ## Overview
 I need a paragraph overview of your model
