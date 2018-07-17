@@ -53,7 +53,6 @@ contains
     use clm_atmlnd , only : adiag_arain, adiag_asnow, adiag_aflux, adiag_lflux
 #if (defined RTM)
     use RunoffMod  , only : rtmCTL, nt_rtm, rtm_tracers
-	use MOSART_wm_type, only : WMctl
 #endif
     use histFileMod, only : hist_add_subscript, hist_addfld1d, hist_addfld2d, &
                             hist_printflds
@@ -850,20 +849,6 @@ contains
     call hist_addfld1d (fname='TEMP_CHANR', units='Kelvin',  &
       avgflag='A', long_name='Water temperature of main channels', &
       ptr_rof=rtmCTL%templand_Tchanr_nt1)
-	
-if(2 > 1)	 then
-    call hist_addfld1d (fname='WRM_DEMAND_RESIDUAL', units='m3',  &
-      avgflag='A', long_name='water demand not yet met', &
-      ptr_rof=rtmCTL%templand_demand_nt1)
-	  
-    call hist_addfld1d (fname='WRM_SUPPLY', units='m3',  &
-      avgflag='A', long_name='water supplied', &
-      ptr_rof=rtmCTL%templand_supply_nt1)
-
-    call hist_addfld1d (fname='WRM_STORAGE', units='m3',  &
-      avgflag='A', long_name='reservoir storage', &
-      ptr_rof=rtmCTL%templand_storage_nt1)
-end if	  
 #endif
 
     ! Water and energy balance checks

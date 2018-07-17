@@ -16,6 +16,7 @@ module RunoffMod
   use shr_kind_mod, only : r8 => shr_kind_r8
   use abortutils  , only : endrun
   use clm_mct_mod
+  use clmtype     , only : allrof
 
 ! !PUBLIC TYPES:
   implicit none
@@ -67,7 +68,6 @@ module RunoffMod
      integer           :: numr           ! rtm gdc global number of cells
      integer           :: numrl          ! rtm gdc global number of lnd cells
      integer           :: numro          ! rtm gdc global number of ocn cells
-	 integer           :: localNumDam    ! local number of dams
 !    - need 1d field pointers for history files
      real(r8), pointer :: runofflnd_nt1(:)
      real(r8), pointer :: runofflnd_nt2(:)
@@ -77,17 +77,6 @@ module RunoffMod
      real(r8), pointer :: dvolrdtlnd_nt2(:)
      real(r8), pointer :: dvolrdtocn_nt1(:)
      real(r8), pointer :: dvolrdtocn_nt2(:)
-
-      real(r8), pointer :: templand_demand(:)
-      real(r8), pointer :: templand_supply(:)
-      real(r8), pointer :: templand_storage(:)
-	 
-      real(r8), pointer :: templand_demand_nt1(:)
-      real(r8), pointer :: templand_demand_nt2(:)
-      real(r8), pointer :: templand_supply_nt1(:)
-      real(r8), pointer :: templand_supply_nt2(:)
-      real(r8), pointer :: templand_storage_nt1(:)
-      real(r8), pointer :: templand_storage_nt2(:)
 
      real(r8), pointer :: templand_Tqsur(:)
      real(r8), pointer :: templand_Tqsub(:)
@@ -246,6 +235,7 @@ module RunoffMod
 	end type TstatusFlux_water
     
 	! heat status and flux variables
+	!gulu
 	public :: TstatusFlux_heat
 	type TstatusFlux_heat
 		! overall
@@ -308,10 +298,12 @@ module RunoffMod
 		real(r8), pointer :: c_nr(:)       ! coefficient to adjust the manning's roughness of channels
 		real(r8), pointer :: c_nh(:)       ! coefficient to adjust the manning's roughness of overland flow across hillslopes
 		real(r8), pointer :: c_twid(:)     ! coefficient to adjust the width of sub-reach channel
+		
 		real(r8), pointer :: t_alpha(:)    ! alpha parameter in air-water temperature relationship (S-curve)
 		real(r8), pointer :: t_beta(:)     ! beta parameter in air-water temperature relationship (S-curve)
 		real(r8), pointer :: t_gamma(:)    ! gamma parameter in air-water temperature relationship (S-curve)
 		real(r8), pointer :: t_mu(:)       ! mu parameter in air-water temperature relationship (S-curve)
+
 	end type Tparameter 
     !== Hongyi
 	type (Tcontrol), public :: Tctl

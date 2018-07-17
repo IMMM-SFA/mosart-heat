@@ -27,7 +27,6 @@ module RtmMod
   use clm_varctl  , only : iulog, frivinp_rtm, nsrest, finidat
   use clm_varctl  , only : rtm_nsteps
   use clm_time_manager, only : get_step_size
-  use clm_time_manager, only : get_curr_date, is_end_curr_day, is_end_curr_month, is_first_step, is_first_restart_step, is_last_step
   use shr_sys_mod , only : shr_sys_flush
   use domainMod   , only : latlon_type, latlon_init, latlon_clean
   use abortutils  , only : endrun
@@ -38,9 +37,6 @@ module RtmMod
   use restFileMod
   use MOSART_water_mod
   use MOSART_heat_mod
-  use MOSART_wm_type, only : WMctl, WMUnit, WMwater
-  use WRM_start_op_year
-  use WRM_modules
   use clm_mct_mod
   use perf_mod
   use ncdio
@@ -143,6 +139,7 @@ contains
     use areaMod      , only : celledge, cellarea, map_setmapsAR
     use decompMod    , only : get_proc_bounds, get_proc_global, ldecomp
     use decompMod    , only : gsMap_lnd_gdc2glo
+    use clm_time_manager, only : get_curr_date
     use clmtype      , only : grlnd
     use spmdGathScatMod
 !
@@ -850,17 +847,6 @@ contains
        write(iulog,*)'Rtmini ERROR allocation of rtmCTL%status'
        call endrun
     end if
-
-	allocate(rtmCTL%templand_demand(begr:endr), rtmCTL%templand_supply(begr:endr), &
-	         rtmCTL%templand_storage(begr:endr), stat=ier)
-	allocate(rtmCTL%templand_demand_nt1(begr:endr), rtmCTL%templand_supply_nt1(begr:endr), &
-	         rtmCTL%templand_storage_nt1(begr:endr), stat=ier)
-	allocate(rtmCTL%templand_demand_nt2(begr:endr), rtmCTL%templand_supply_nt2(begr:endr), &
-	         rtmCTL%templand_storage_nt2(begr:endr), stat=ier)
-    if (ier /= 0) then
-       write(iulog,*)'Rtmini ERROR allocation of wmCTL%storage'
-       call endrun
-    end if
 	
     allocate(rgdc2glo(numr), rtmCTL%mask(numr), stat=ier)
     if (ier /= 0) then
@@ -931,16 +917,6 @@ contains
 	rtmCTL%templand_Tqsub_nt2 = spval
 	rtmCTL%templand_Ttrib_nt2 = spval
 	rtmCTL%templand_Tchanr_nt2 = spval
-
-    rtmCTL%templand_demand = 0._r8
-    rtmCTL%templand_supply = 0._r8
-    rtmCTL%templand_storage = 0._r8
-    rtmCTL%templand_demand_nt1 = spval
-    rtmCTL%templand_supply_nt1 = spval
-    rtmCTL%templand_storage_nt1 = spval
-    rtmCTL%templand_demand_nt2 = spval
-    rtmCTL%templand_supply_nt2 = spval
-    rtmCTL%templand_storage_nt2 = spval
 	
     do nr = begr,endr
        n = rgdc2glo(nr)
@@ -966,13 +942,6 @@ contains
 			 rtmCTL%templand_Ttrib_nt2(nr) = rtmCTL%templand_Ttrib(nr)
 			 rtmCTL%templand_Tchanr_nt1(nr) = rtmCTL%templand_Tchanr(nr)
 			 rtmCTL%templand_Tchanr_nt2(nr) = rtmCTL%templand_Tchanr(nr)
-			 
-			 rtmCTL%templand_demand_nt1(nr) = rtmCTL%templand_demand(nr)
-			 rtmCTL%templand_demand_nt2(nr) = rtmCTL%templand_demand(nr)
-			 rtmCTL%templand_supply_nt1(nr) = rtmCTL%templand_supply(nr)
-			 rtmCTL%templand_supply_nt2(nr) = rtmCTL%templand_supply(nr)
-			 rtmCTL%templand_storage_nt1(nr) = rtmCTL%templand_storage(nr)
-			 rtmCTL%templand_storage_nt2(nr) = rtmCTL%templand_storage(nr)
        elseif (rtmCTL%mask(nr) == 2) then
           do nt = 1,nt_rtm
              rtmCTL%runoffocn(nr,nt) = rtmCTL%runoff(nr,nt)
@@ -986,13 +955,6 @@ contains
 			 rtmCTL%templand_Ttrib_nt2(nr) = rtmCTL%templand_Ttrib(nr)
 			 rtmCTL%templand_Tchanr_nt1(nr) = rtmCTL%templand_Tchanr(nr)
 			 rtmCTL%templand_Tchanr_nt2(nr) = rtmCTL%templand_Tchanr(nr)
-			 
-			 rtmCTL%templand_demand_nt1(nr) = rtmCTL%templand_demand(nr)
-			 rtmCTL%templand_demand_nt2(nr) = rtmCTL%templand_demand(nr)
-			 rtmCTL%templand_supply_nt1(nr) = rtmCTL%templand_supply(nr)
-			 rtmCTL%templand_supply_nt2(nr) = rtmCTL%templand_supply(nr)
-			 rtmCTL%templand_storage_nt1(nr) = rtmCTL%templand_storage(nr)
-			 rtmCTL%templand_storage_nt2(nr) = rtmCTL%templand_storage(nr)
        endif
 
 !tcx testing
@@ -1153,48 +1115,15 @@ contains
    call mct_sMatP_Vecinit(sMatP_l2r)
 #endif
 
-   deallocate (TUnit%fdir,TUnit%ID0,TUnit%dnID,TUnit%rlen, TUnit%area)
-
    call t_startf('rtmi_mosart')
+
+   deallocate (TUnit%fdir,TUnit%ID0,TUnit%dnID,TUnit%rlen, TUnit%area)
 	!=== initialize MOSART related variables
-   call MOSART_water_init()
-   if (masterproc) then
-      write(iulog,*) 'MOSART_water initialization completed'
-   endif
-   call MOSART_heat_init()
-   if (masterproc) then
-      write(iulog,*) 'MOSART_heat initialization completed'
-   endif
-
-	WMctl%WRMFlag = 1
-	WMctl%ExtractionFlag = 1
-	WMctl%ExtractionMainChannelFlag = 1
-	WMctl%RegulationFlag = 1
-	WMctl%paraPath = '/pic/projects/prima/liho745/inputdata/MOSART_wm_parameters/'
-	WMctl%paraFile = 'US_reservoir_8th_hist.nc'
-	WMctl%demandPath = '/pic/projects/prima/liho745/inputdata/GCAM_waterdemand/RCP_nc/rcp4.5/RCP4.5_GCAM_water_demand_'
-
-	if(WMctl%WRMFlag > 0) then
-		call check_ret(nf_open(trim(WMctl%paraPath) // WMctl%paraFile, 0, ncid), 'Reading WM parameter file: ' // trim(WMctl%paraPath) // WMctl%paraFile)   
-		allocate (WMUnit%isDam(begr:endr))
-		WMUnit%isDam = 0
-		call MOSART_read_int(ncid, 'unit_ID', WMUnit%isDam)
-		rtmCTL%localNumDam = 0
-		do nr=begr,endr 
-			if(WMUnit%isDam(nr) > 0) then
-				rtmCTL%localNumDam = rtmCTL%localNumDam + 1
-			end if
-		end do
-		call check_ret(nf_close(ncid), "Reading WM parameter file")
-		call MOSART_wm_init()
-		if (masterproc) then
-		  write(iulog,*) 'MOSART_wm initialization completed'
-		endif
-	end if
+   call MOSART_init()
    !ns = mct_gsMap_lsize(gsMap_rtm_gdc2glo, mpicom)
    !call mct_aVect_init(aV_rtmr,rlist=trim(rtm_trstr),lsize=ns)
-   !deallocate(rgdc2glo,rglo2gdc)
-    call latlon_clean(rlatlon)
+   deallocate(rgdc2glo,rglo2gdc)
+   call latlon_clean(rlatlon)
 
 
     !-------------------------------------------------------
@@ -1283,6 +1212,7 @@ contains
     type(mct_aVect)    :: aV_lndr,aV_rtmr
     type(mct_aVect)    :: aV_lndr_qsur,aV_rtmr_qsur
     type(mct_aVect)    :: aV_lndr_qsub,aV_rtmr_qsub
+	!gulu
     type(mct_aVect)    :: aV_lndr_Tqsur,aV_rtmr_Tqsur
     type(mct_aVect)    :: aV_lndr_Tqsub,aV_rtmr_Tqsub
 	type(mct_aVect)    :: aV_lndr_forc_t,aV_rtmr_forc_t
@@ -1295,21 +1225,9 @@ contains
 !-----------------------------------------------------------------------
 
     ! Determine RTM inputs on land model grid
-    call RtmUpdateInput(do_rtm)
-	
-	if(WMctl%WRMFlag > 0 .and. rtmCTL%localNumDam > 0) then
-		if (is_first_step() .or. is_first_restart_step() .or. (is_end_curr_month() .and. .not.is_last_step())) then
-			call MosartUpdateDemand
-			! the unit of demand from the inputs is m3/s, and here convert it to m3 to be consistent with the usage in the MOSART-wm 
-		    WMwater%demand0 = WMwater%demand0 * get_step_size()
-		end if
-		
-		WMwater%demand = WMwater%demand0
-		WMwater%supply = 0._r8
 
-	end if
-	
-	
+    call RtmUpdateInput(do_rtm)
+
     if (do_rtm) then
 
        call t_startf('clmrtm_l2r')
@@ -1793,32 +1711,12 @@ contains
 			rtmCTL%templand_Tchanr(n) = 0._r8
 		end if
 	end do
-
-    rtmCTL%templand_demand = spval
-    rtmCTL%templand_supply = spval
-    rtmCTL%templand_storage = spval
-	do n = rtmCTL%begr,rtmCTL%endr
-	    if (rtmCTL%mask(n) > 0 .and. THeat%Tqsur(n) < 1e10) then
-			rtmCTL%templand_demand(n) = 0._r8
-			rtmCTL%templand_supply(n) = 0._r8
-			rtmCTL%templand_storage(n) = 0._r8
-		end if
-	end do
 	
     !--- subcycling ---
     Tctl%DeltaT = delt
     do ns = 1,nsub
 	   !call Euler
-	   
-	   if ( WMctl%WRMFlag > 0 .and. rtmCTL%localNumDam > 0) then
-	       !call TVD
-	       call TVD_wm
-	   else
-	       call TVD
-	   end if
-
-       !call printTest(ns*100000+iam)
-       !call shr_sys_flush(ns*100000+iam)
+	   call TVD
 
 	   if(masterproc) then
 	    !call createFile(1111,'test.dat')
@@ -1830,7 +1728,6 @@ contains
 	       !call printTest(1111)
 		   !call shr_sys_flush(1111)
 	   end if
-       
        sfluxin = 0._r8
        do n = rtmCTL%begr,rtmCTL%endr
           nr = rtmCTL%dsi(n)
@@ -1913,16 +1810,7 @@ contains
 			   rtmCTL%templand_Tchanr(n) = rtmCTL%templand_Tchanr(n) + THeat%Tr_avg(n)
 		   end if
 	   enddo
-
-	   do n = rtmCTL%begr,rtmCTL%endr
-	       if (rtmCTL%mask(n) > 0 .and. THeat%Tqsur(n) < 1e10) then
-			   rtmCTL%templand_demand(n) = rtmCTL%templand_demand(n) + WMwater%demand_avg(n)
-			   rtmCTL%templand_supply(n) = rtmCTL%templand_supply(n) + WMwater%supply_avg(n)
-			   rtmCTL%templand_storage(n) = rtmCTL%templand_storage(n) + WMwater%storage_avg(n)
-		   end if
-	   enddo
-
-   enddo
+    enddo
 
     ! average fluxes over subcycling
     rtmCTL%runoff = rtmCTL%runoff / float(nsub)
@@ -1944,14 +1832,6 @@ contains
 		  rtmCTL%templand_Tqsub(n) = rtmCTL%templand_Tqsub(n) / float(nsub)
 		  rtmCTL%templand_Ttrib(n) = rtmCTL%templand_Ttrib(n) / float(nsub)
 		  rtmCTL%templand_Tchanr(n) = rtmCTL%templand_Tchanr(n) / float(nsub)
-	   end if
-    end do
-
-    do n = rtmCTL%begr,rtmCTL%endr
-	   if(rtmCTL%mask(n) > 0 .and. THeat%Tqsur(n) < 1e10) then
-		  rtmCTL%templand_demand(n) = rtmCTL%templand_demand(n) / float(nsub)
-		  rtmCTL%templand_supply(n) = rtmCTL%templand_supply(n) / float(nsub)
-		  rtmCTL%templand_storage(n) = rtmCTL%templand_storage(n) / float(nsub)
 	   end if
     end do
 	
@@ -1987,21 +1867,12 @@ contains
 		  rtmCTL%templand_Tchanr(n) = spval
 	   end if
     end do
-	
-    do n = rtmCTL%begr,rtmCTL%endr
-	   if(rtmCTL%mask(n) > 0 .and. THeat%Tqsur(n) < 1e10) then
-			 rtmCTL%templand_demand_nt1(n) = rtmCTL%templand_demand(n)
-			 rtmCTL%templand_demand_nt2(n) = rtmCTL%templand_demand(n)
-			 rtmCTL%templand_supply_nt1(n) = rtmCTL%templand_supply(n)
-			 rtmCTL%templand_supply_nt2(n) = rtmCTL%templand_supply(n)
-			 rtmCTL%templand_storage_nt1(n) = rtmCTL%templand_storage(n)
-			 rtmCTL%templand_storage_nt2(n) = rtmCTL%templand_storage(n)
-	   else
-		  rtmCTL%templand_demand(n) = spval
-		  rtmCTL%templand_supply(n) = spval
-		  rtmCTL%templand_storage(n) = spval
-	   end if
-    end do
+    !***gulu
+	do n = rtmCTL%begr,rtmCTL%endr
+	    if(rtmCTL%templand_Tchanr_nt1(n) < 373.15 .and. rtmCTL%templand_Tchanr_nt1(n) > 273.15 .and. rtmCTL%runoff(n,1) > 1e10) then
+		    write(iulog,*) 'stream temp error at : ', n
+		end if
+	end do
 	
     call rtm_sethist()
 
@@ -2073,10 +1944,6 @@ contains
 	   !end if
   end subroutine rtm_sethist
 
-  
-!=====================================================================================
-!begining of newly added subroutines for MOSART
-  
 !-----------------------------------------------------------------------
 !BOP
 !
@@ -2248,170 +2115,14 @@ contains
 	deallocate(temp1D)
   end subroutine MOSART_read_int  
 
-
-!-----------------------------------------------------------------------
-!BOP
-!
-! !IROUTINE: rtm_readnc
-!
-! !INTERFACE:
-  subroutine mosart_wm_readnc_int_1D(ncid, varname, var1D)
-!
-! !DESCRIPTION:
-! read 1D array from netCDF file
-!
-! !USES:
-
-! !ARGUMENTS:
-    implicit none
-!
-! !REVISION HISTORY:
-! Author: Hongyi Li
-!
-!
-! !OTHER LOCAL VARIABLES:
-!EOP
-	character(len=*), intent(in) :: varname
-	integer, intent(in) :: ncid  
-    integer , pointer, intent(in) :: var1D(:)	
-    
-	integer :: ilat, ilon, nn, varid 
-    integer ,pointer :: temp1D(:)       ! temporary for initialization
-	
-    character(len=32) :: subname = 'read_MOSART_wm_inputs'
-	allocate(temp1D(wmCTL%NDam))
-	call check_ret(nf_inq_varid (ncid, varname, varid), subname//varname)
-	call check_ret(nf_get_var_int (ncid, varid, temp1D), subname)
-		
-    var1D = temp1D
-	deallocate(temp1D)
-  end subroutine mosart_wm_readnc_int_1D
-
-
-!-----------------------------------------------------------------------
-!BOP
-!
-! !IROUTINE: rtm_readnc
-!
-! !INTERFACE:
-  subroutine mosart_wm_readnc_int_2D(ncid, varname, var2D, dim1, dim2)
-!
-! !DESCRIPTION:
-! read 2D array from netCDF file
-!
-! !USES:
-
-! !ARGUMENTS:
-    implicit none
-!
-! !REVISION HISTORY:
-! Author: Hongyi Li
-!
-!
-! !OTHER LOCAL VARIABLES:
-!EOP
-	character(len=*), intent(in) :: varname
-	integer, intent(in) :: ncid, dim1, dim2
-    integer , pointer, intent(in) :: var2D(:,:)
-    
-	integer :: ilat, ilon, nn, varid 
-    integer ,pointer :: temp2D(:,:)       ! temporary for initialization
-    character(len=32) :: subname = 'read_MOSART_wm_inputs'
-
-    allocate(temp2D(dim1,dim2))
-	call check_ret(nf_inq_varid (ncid, varname, varid), subname//varname)
-	call check_ret(nf_get_var_int (ncid, varid, temp2D), subname)
-    var2D = temp2D
-
-    deallocate(temp2D)
-  end subroutine mosart_wm_readnc_int_2D
-
-
-!-----------------------------------------------------------------------
-!BOP
-!
-! !IROUTINE: rtm_readnc
-!
-! !INTERFACE:
-  subroutine mosart_wm_readnc_int_3D(ncid, varname, var3D, dim1, dim2,dim3)
-!
-! !DESCRIPTION:
-! read 3D array from netCDF file
-!
-! !USES:
-
-! !ARGUMENTS:
-    implicit none
-!
-! !REVISION HISTORY:
-! Author: Hongyi Li
-!
-!
-! !OTHER LOCAL VARIABLES:
-!EOP
-	character(len=*), intent(in) :: varname
-	integer, intent(in) :: ncid, dim1, dim2, dim3
-    integer , pointer, intent(in) :: var3D(:,:,:)
-    
-	integer :: ilat, ilon, nn, varid 
-    integer ,pointer :: temp3D(:,:,:)       ! temporary for initialization
-    character(len=32) :: subname = 'read_MOSART_wm_inputs'
-
-    allocate(temp3D(dim1,dim2,dim3))
-	call check_ret(nf_inq_varid (ncid, varname, varid), subname//varname)
-	call check_ret(nf_get_var_int (ncid, varid, temp3D), subname)
-    var3D = temp3D
-
-    deallocate(temp3D)
-  end subroutine mosart_wm_readnc_int_3D
-
-
-!-----------------------------------------------------------------------
-!BOP
-!
-! !IROUTINE: rtm_readnc
-!
-! !INTERFACE:
-  subroutine mosart_wm_readnc_dbl_2D(ncid, varname, var2D, dim1, dim2)
-!
-! !DESCRIPTION:
-! read 2D array from netCDF file and convert it into 1D
-!
-! !USES:
-
-! !ARGUMENTS:
-    implicit none
-!
-! !REVISION HISTORY:
-! Author: Hongyi Li
-!
-!
-! !OTHER LOCAL VARIABLES:
-!EOP
-	character(len=*), intent(in) :: varname
-	integer, intent(in) :: ncid, dim1, dim2
-    real(r8), pointer, intent(in) :: var2D(:,:)
-    
-	integer :: ilat, ilon, nn, varid, dimid(1:3)
-    real(r8),pointer :: temp2D(:,:)       ! temporary for initialization
-    character(len=32) :: subname = 'read_MOSART_wm_inputs'
-
-    allocate(temp2D(dim1,dim2))
-	call check_ret(nf_inq_varid (ncid, varname, varid), subname//varname)
-	call check_ret(nf_get_var_double (ncid, varid, temp2D), subname)
-    var2D = temp2D
-
-    deallocate(temp2D)
-
-  end subroutine mosart_wm_readnc_dbl_2D
-
+  
 !-----------------------------------------------------------------------
 !BOP
 !
 ! !IROUTINE: 
 !
 ! !INTERFACE:
-  subroutine MOSART_water_init
+  subroutine MOSART_init
 !
 ! !REVISION HISTORY:
 ! Author: Hongyi Li
@@ -2520,8 +2231,8 @@ contains
 		
 		  if(TUnit%rlen(iunit) > 0._r8) then
 			  TUnit%hlen(iunit) = TUnit%area(iunit) / TUnit%rlenTotal(iunit) / 2._r8
-			  if(TUnit%hlen(iunit) > 5000_r8) then
-				  TUnit%hlen(iunit) = 5000_r8   ! allievate the outlier in drainage density estimation. TO DO
+			  if(TUnit%hlen(iunit) > 50000_r8) then
+				  TUnit%hlen(iunit) = 50000_r8   ! allievate the outlier in drainage density estimation. TO DO
 			  end if
 			  TUnit%tlen(iunit) = TUnit%area(iunit) / TUnit%rlen(iunit) / 2._r8 - TUnit%hlen(iunit)
 			  ! adding hard constraint, i.e., the subnetwork channel length should not exceed half of the size of a grid cell.
@@ -2538,10 +2249,6 @@ contains
 			  end if
 				  
 			  if(TUnit%tlen(iunit) > 0._r8 .and. TUnit%twidth(iunit) <= 0._r8) then
-				  TUnit%twidth(iunit) = 0._r8
-			  end if
-			  if(TUnit%tlen(iunit) <= 0._r8) then
-				  TUnit%tlen(iunit) = 0.0_r8
 				  TUnit%twidth(iunit) = 0._r8
 			  end if
 		  else
@@ -2570,6 +2277,7 @@ contains
 		  end do
 		end do
 		  
+		  ! this part needs to modified for grid-based representation
 		do iunit=rtmCTL%begr,rtmCTL%endr
 		  do nn=rtmCTL%begr,rtmCTL%endr
 			  if(TUnit%dnID(iunit) == TUnit%ID0(nn)) then
@@ -2610,7 +2318,7 @@ contains
 			end if
 		end do
     end if
-
+   
    ! read the parameters for mosart-heat
    if(endr >= begr) then
  		call check_ret(nf_open(frivinp_rtm, 0, ncid), 'Reading file: ' // frivinp_rtm)
@@ -2626,7 +2334,7 @@ contains
 		call check_ret(nf_close(ncid), subname)
    end if
 
-
+ 
     ! control parameters
 	Tctl%RoutingMethod = 1
 	!Tctl%DATAH = rtm_nsteps*get_step_size()
@@ -2713,44 +2421,6 @@ contains
 		allocate (TRunoff%flow(begr:endr,nt_rtm))
 		TRunoff%flow = 0._r8
 		
-		
-		
-  end subroutine MOSART_water_init
-
-!-----------------------------------------------------------------------
-!BOP
-!
-! !IROUTINE: 
-!
-! !INTERFACE:
-  subroutine MOSART_heat_init
-!
-! !REVISION HISTORY:
-! Author: Hongyi Li
-
-! !DESCRIPTION:
-! initialize MOSART variables
-! 
-! !USES:
-    use domainMod    , only : ldomain
-! !ARGUMENTS:
-    implicit none
-!
-! !REVISION HISTORY:
-! Author: Hongyi Li
-!
-!
-! !OTHER LOCAL VARIABLES:
-!EOP
-    integer  :: ncid, varid, dimid(0:2)    ! temporary
-	integer  :: begr, endr, iunit, nn
-    character(len=32) :: subname = 'read_MOSART_heat_inputs '
-    character(len=1000) :: fname
-	real(r8) :: dx, dy, dx1, dx2, dx3, deg2rad
-    
-	begr = rtmCTL%begr
-	endr = rtmCTL%endr
-	
 		! initialize heat states and fluxes
 		allocate (THeat%forc_t(begr:endr))
 		THeat%forc_t = 273.15_r8
@@ -2826,9 +2496,10 @@ contains
 		THeat%Tt_avg = 273.15_r8
 		allocate (THeat%Tr_avg(begr:endr))
 		THeat%Tr_avg = 273.15_r8
-      
-  end subroutine MOSART_heat_init
 
+	
+		
+  end subroutine MOSART_init
   
   subroutine SubTimestep
 	! !DESCRIPTION: predescribe the sub-time-steps for channel routing
@@ -3164,741 +2835,6 @@ end if
 		THeat%Tr_avg = THeat%Tr_avg / Tctl%DLevelH2R
 end if		
 	end subroutine TVD
-
-!-----------------------------------------------------------------------
-!BOP
-!
-! !IROUTINE: 
-!
-! !INTERFACE:
-  subroutine MOSART_wm_init
-!
-! Developed by Hong-Yi Li 07/15/2014
-! !REVISION HISTORY:
-! 
-
-! !DESCRIPTION:
-! initialize MOSART_wm variables
-! 
-! !USES:
-! !ARGUMENTS:
-    implicit none
-!
-! !REVISION HISTORY:
-! Author: Hongyi Li
-!
-!
-! !OTHER LOCAL VARIABLES:
-!EOP
-    logical :: readvar          ! determine if variable is on input file
-    integer  :: ncid, varid, dimid(0:2)    
-	integer  :: begr, endr, iunit, idam, n, nn, nr, ntotal, ilat, ilon, idepend
-    integer  :: nd, i, j , mth, match, nsub, maxNumDependentGrid              ! local loop indices
-	character(len=32) :: subname = 'read_MOSART_WM_inputs '
-    character(len=1000) :: fname, strTemp, strMon
-	real(r8) :: dx, dy, dx1, dx2, dx3, deg2rad
-    real(r8), pointer :: temp1D_dbl(:), temp2D_nc_dbl(:,:), temp2D_local_dbl(:,:), temp2D_dbl(:,:), temp3D_dbl(:,:,:) ! temporary
-    integer, pointer  :: temp1D_int(:), temp2D_nc_int(:,:), temp2D_local_int(:,:), temp2D_int(:,:), temp3D_int(:,:,:) ! temporary
-    integer, pointer  :: UnitID_1D(:) ! 1D array to save the indice of the dams in a 2D spatial array, for the mapping between the 1D and 2D arrays of the dam properties
-    integer, pointer  :: idam_global(:) ! 1D array to save the indice of the local dams in the global dam array, for the mapping between local and global dams
-    integer, pointer  :: inverse_INVicell(:) ! 1D array to save the local indices of the dams (begr--endr), inverse of WMUnit%INVicell()
-
-	begr = rtmCTL%begr
-	endr = rtmCTL%endr
-
-	fname = trim(WMctl%paraPath) // WMctl%paraFile
-    if(WMctl%WRMFlag > 0 .and. endr >= begr) then
-	    !write(iulog,*) 'Reading Wm parameters'
-	    call check_ret(nf_open(fname, 0, ncid), 'Reading WM parameter file: ' // fname)
-		!call check_ret(nf_inq_dimid  (ncid, 'Dams', dimid), subname//'--Dams')
-		call check_ret(nf_inq_dimid  (ncid, 'Dams', dimid), subname//'--Dams')
-		call check_ret(nf_inq_dimlen (ncid, dimid, WMctl%NDam), subname)
-		call check_ret(nf_inq_dimid  (ncid, 'DependentGrids', dimid), subname//'--Dams')
-		call check_ret(nf_inq_dimlen (ncid, dimid, maxNumDependentGrid), subname)
-
-		!nd = WMctl%NDam
-		if (masterproc) then
-			   write(iulog,*)'Dams in MOSART    = ',WMctl%NDam
-			   call shr_sys_flush(iulog)
-		end if
-        !total number of grids/subws
-        nsub = MAXVAL(rglo2gdc)
-		nd = rtmCTL%localNumDam
-        ! 
-		allocate (WMUnit%subw_Ndepend(begr:endr))
-        WMUnit%subw_Ndepend = 0        ! 
-        allocate (WMUnit%subw_depend(begr:endr,nd))
-        WMUnit%subw_depend = 0        !
-
-        allocate (WMUnit%dam_Ndepend(nd))
-        WMUnit%dam_Ndepend = 0        !
-        allocate (WMUnit%dam_depend(nd,maxNumDependentGrid))
-        WMUnit%dam_depend = -99        !
-        allocate (WMUnit%DamName(nd))
-        allocate (WMUnit%TotStorCapDepend(begr:endr))
-        WMUnit%TotStorCapDepend = 0._r8
-        allocate (WMUnit%TotInflowDepend(begr:endr))
-        WMUnit%TotInflowDepend = 0._r8
-
-        allocate (WMUnit%icell(nd))
-        WMUnit%icell = 0
-        allocate (WMUnit%INVicell(begr:endr))
-        WMUnit%INVicell =-99 
-        allocate (WMUnit%mask(nd))
-        WMUnit%mask = 0
-        allocate (WMUnit%YEAR(nd))
-        WMUnit%YEAR = 1900
-
-        !!! note: the original usage of INVisubw (in Nathalie's code) is to map the dependent grids of each dam 
-        !!! (from global indexing system -- 2D spatial array of the whole study domain) into the local indexing system. 
-        !!! i.e., the values in dam_depend() are global indices in Nathalie's code. 
-        !!! Here I directly convert these global indices while reading/processing dam_depend(), therefore no use of INVisubw anymore
-        allocate (WMUnit%INVisubw(nsub))
-        WMUnit%INVisubw = -99
-
-        allocate (WMUnit%SurfArea(nd))
-	    WMUnit%SurfArea = 0._r8
-	    allocate (WMUnit%InstCap(nd))
-        WMUnit%InstCap = 0._r8
-        allocate (WMUnit%StorCap(nd))
-        WMUnit%StorCap = 0._r8
-        allocate (WMUnit%Height(nd))
-        WMUnit%Height = 0._r8
-        allocate (WMUnit%Length(nd))
-        WMUnit%Length = 0._r8
-        allocate (WMUnit%Depth(nd))
-        WMUnit%Depth = 0._r8
-
-        allocate (WMUnit%MeanMthFlow(nd,13))
-        WMUnit%MeanMthFlow = 0._r8
-        allocate (WMUnit%MeanMthDemand(nd,13))
-        WMUnit%MeanMthDemand = 0._r8
-        allocate (WMUnit%INVc(nd))
-        WMUnit%INVc = 0._r8
-        allocate (WMUnit%use_Irrig(nd))
-        WMUnit%use_Irrig = 0
-        allocate (WMUnit%use_Elec(nd))
-        WMUnit%use_Elec = 0
-        allocate (WMUnit%use_Supp(nd))
-        WMUnit%use_Supp = 0
-        allocate (WMUnit%use_FCon(nd))
-        WMUnit%use_FCon = 0
-        allocate (WMUnit%use_Fish(nd))
-        WMUnit%use_Fish = 0
-        allocate (WMUnit%use_Rec(nd))
-        WMUnit%use_Rec = 0
-        allocate (WMUnit%use_Navi(nd))
-        WMUnit%use_Navi = 0
-
-        allocate (WMUnit%Withdrawal(nd))
-        WMUnit%Withdrawal = 0
-        allocate (WMUnit%Conveyance(nd))
-        WMUnit%Conveyance = 0
-        allocate (WMUnit%MthStOp(nd))
-        WMUnit%MthStOp = 0
-        allocate (WMUnit%StorMthStOp(nd))
-        WMUnit%StorMthStOp = 0
-        allocate (WMUnit%MthStFC(nd))
-        WMUnit%MthStFC = 0
-        allocate (WMUnit%MthNdFC(nd))
-        WMUnit%MthNdFC = 0
-        allocate (WMUnit%FCtarget(nd))
-        WMUnit%FCtarget = 0
-        allocate (WMUnit%MthFCtarget(nd))
-        WMUnit%MthFCtarget = 0
-        allocate (WMUnit%MthFCtrack(nd))
-        WMUnit%MthFCtrack = 0
-
-        allocate (WMwater%supply(begr:endr))
-        WMwater%supply=0._r8
-        allocate (WMwater%deficit(begr:endr))
-        WMwater%deficit=0._r8
-        allocate (WMwater%demand0(begr:endr))
-        WMwater%demand0=0._r8
-        allocate (WMwater%demand(begr:endr))
-        WMwater%demand=0._r8
-        allocate (WMwater%pre_release(nd, 13))
-        WMwater%pre_release = 0._r8
-        allocate (WMwater%storage(nd))
-        WMwater%storage = 0._r8
-        allocate (WMwater%release(nd))
-        WMwater%release = 0._r8
-        allocate (WMwater%FCrelease(nd))
-        WMwater%FCrelease = 0._r8
-        allocate (WMwater%pot_evap(begr:endr))
-        WMwater%pot_evap=0._r8
-        allocate (WMwater%extract_t(begr:endr))
-        WMwater%extract_t=0._r8
-        allocate (WMwater%extract_r(begr:endr))
-        WMwater%extract_r=0._r8
-        allocate (WMwater%extract_res(begr:endr))
-        WMwater%extract_res=0._r8
-        allocate (WMwater%supply_local(begr:endr))
-        WMwater%supply_local=0._r8
-        allocate (WMwater%supply_res(begr:endr))
-        WMwater%supply_res=0._r8
-
-        allocate (WMwater%demand_avg(begr:endr))
-        WMwater%demand_avg=0._r8
-        allocate (WMwater%supply_avg(begr:endr))
-        WMwater%supply_avg=0._r8
-        allocate (WMwater%storage_avg(begr:endr))
-        WMwater%storage_avg=0._r8
-		
-		! start reading the wm para
-		
-		call MOSART_wm_read_int_1d(ncid, 'unit_ID', WMUnit%icell)
-		call MOSART_wm_read_int_1d(ncid, 'DamID_Spatial', WMUnit%mask)
-		call MOSART_wm_read_dbl_1d(ncid, 'RUNOFF_CAP', WMUnit%INVc)
-		call MOSART_wm_read_int_1d(ncid, 'Year', WMUnit%YEAR)
-		
-		call MOSART_wm_read_dbl_1d(ncid, 'dam_hgt', WMUnit%Height)
-		call MOSART_wm_read_dbl_1d(ncid, 'dam_len', WMUnit%Length)
-		call MOSART_wm_read_dbl_1d(ncid, 'area_skm', WMUnit%SurfArea)
-		WMUnit%SurfArea = WMUnit%SurfArea * 1e6
-		call MOSART_wm_read_dbl_1d(ncid, 'cap_mcm', WMUnit%StorCap)
-        !in MCM
-        WMUnit%StorCap=WMUnit%StorCap*1e6
-        !WMUnit%StorMthStOp = WMUnit%StorCap*0.9
-		call MOSART_wm_read_dbl_1d(ncid, 'depth_m', WMUnit%Depth)
-		call MOSART_wm_read_int_1d(ncid, 'use_irri', WMUnit%use_Irrig)
-		call MOSART_wm_read_int_1d(ncid, 'use_elec', WMUnit%use_Elec)
-		call MOSART_wm_read_int_1d(ncid, 'use_supp', WMUnit%use_Supp)
-		call MOSART_wm_read_int_1d(ncid, 'use_fcon', WMUnit%use_FCon)
-		call MOSART_wm_read_int_1d(ncid, 'use_recr', WMUnit%use_Rec)
-		call MOSART_wm_read_int_1d(ncid, 'use_navi', WMUnit%use_Navi)
-		call MOSART_wm_read_int_1d(ncid, 'use_fish', WMUnit%use_Fish)
-		call MOSART_wm_read_dbl_1d(ncid, 'withdraw', WMUnit%Withdrawal)
-		call MOSART_wm_read_dbl_1d(ncid, 'conveyance', WMUnit%Conveyance)
-		
-        !initialize INCVicell, mapping between local dams and local mosart grids through global index of grids.
-        allocate (inverse_INVicell(rtmCTL%localNumDam))
-        inverse_INVicell = -99
-        do idam=1,rtmCTL%localNumDam
-           j = WMUnit%icell(idam) ! cell number where dam is located, need indice
-           match = 0
-           do nr=begr,endr 
-             match = TUnit%ID0(nr)
-             if (match .eq. j) then
-                WMUnit%INVicell(nr) = idam
-                inverse_INVicell(idam) = nr
-             end if
-           end do
-           if ( match .eq. 0 ) then
-             print*, "Error finding INVicell ", idam, j, WMctl%NDam
-             stop
-           endif
-        end do
-
-        allocate(UnitID_1D(wmCTL%NDam))
-        call mosart_wm_readnc_int_1D(ncid, 'unitID_1D', UnitID_1D)
-        allocate(idam_global(rtmCTL%localNumDam))
-        idam_global = -99
-        do idam=1,rtmCTL%localNumDam
-            do nn=1,wmCTL%NDam
-                if(WMUnit%icell(idam) .eq. UnitID_1D(nn)) then
-                    idam_global(idam) = nn
-                    exit
-                end if
-            end do
-        end do
-        deallocate(UnitID_1D)
-
-		! reading mean monthly flow data
-        allocate(temp2D_local_dbl(wmCTL%NDam,12))
-        call mosart_wm_readnc_dbl_2D(ncid, 'Qmon', temp2D_local_dbl, wmCTL%NDam,12)
-		do nr=rtmCTL%begr,rtmCTL%endr
-			if(WMUnit%isDam(nr)>0) then
-                idam = WMUnit%INVicell(nr)
-                nn=idam_global(idam)
-                WMUnit%MeanMthFlow(idam,1:12) = temp2D_local_dbl(nn,1:12)
-                WMUnit%MeanMthFlow(idam,13) = sum(WMUnit%MeanMthFlow(idam,1:12))/12.0_r8
-			end if
-		end do
-        deallocate(temp2D_local_dbl)
-
-		! reading in mean monthly water demand
-        allocate(temp2D_local_dbl(wmCTL%NDam,12))
-        call mosart_wm_readnc_dbl_2D(ncid, 'demand', temp2D_local_dbl, wmCTL%NDam,12)
-		do nr=rtmCTL%begr,rtmCTL%endr
-			if(WMUnit%isDam(nr)>0) then
-                idam = WMUnit%INVicell(nr)
-                nn=idam_global(idam)
-                WMUnit%MeanMthDemand(idam,1:12) = temp2D_local_dbl(nn,1:12)
-                WMUnit%MeanMthDemand(idam,1:12) = WMUnit%MeanMthDemand(idam,1:12) * WMUnit%Withdrawal(idam)
-                WMUnit%MeanMthDemand(idam,13) = sum(WMUnit%MeanMthDemand(idam,1:12))/12.0_r8
-			end if
-		end do
-        deallocate(temp2D_local_dbl)
-
-        !initialize constant monthly pre-release based on longterm mean flow and demand (Biemans 2011)
-        do idam=1,rtmCTL%localNumDam
-          do mth=1,12
-            WMwater%pre_release(idam,mth) = WMUnit%MeanMthFlow(idam,13)
-          end do
-          if ( WMUnit%MeanMthDemand(idam,13) >= (0.5_r8*WMUnit%MeanMthFlow(idam,13)) .and. WMUnit%MeanMthFlow(idam,13)>0._r8 ) then
-            do mth=1,12
-              WMwater%pre_release(idam,mth) = WMUnit%MeanMthDemand(idam,mth)/10._r8 + 9._r8/10._r8*WMUnit%MeanMthFlow(idam,13)*WMUnit%MeanMthDemand(idam,mth)/WMUnit%MeanMthDemand(idam, 13)
-              !TEST
-              !WMwater%pre_release(idam,mth) = WMUnit%MeanMthDemand(idam,mth)/10._r8 + 9._r8/10._r8*WMUnit%MeanMthFlow(idam,13)*WMUnit%MeanMthDemand(idam,mth)/WMUnit%MeanMthDemand(idam, 13)*.5_r8
-            end do
-          else 
-            do mth=1,12
-              if ( (WMUnit%MeanMthFlow(idam,13) + WMUnit%MeanMthDemand(idam,mth) - WMUnit%MeanMthDemand(idam,13))>0 ) then
-                  WMwater%pre_release(idam, mth) = WMUnit%MeanMthFlow(idam,13) + WMUnit%MeanMthDemand(idam,mth) - WMUnit%MeanMthDemand(idam,13)
-              endif 
-              ! test 2
-              !WMwater%pre_release(idam, mth) = WMUnit%MeanMthFlow(idam,13)*0.5_r8 + WMUnit%MeanMthDemand(idam,mth) - WMUnit%MeanMthDemand(idam,13)
-              !TEST use pseudo regulated flow
-              !WMwater%pre_release(idam, mth) = WMUnit%MeanMthFlow(idam,13)*.5_r8 + WMUnit%MeanMthDemand(idam,mth) - WMUnit%MeanMthDemand(idam,13)
-            end do
-          end if
-
-           ! initialize storage in each reservoir - arbitrary 50%
-           WMwater%storage(idam) = 0.9_r8 * WMUnit%StorCap(idam)   
-           if ( WMUnit%StorCap(idam) <= 0 ) then
-               print*, "Error negative max cap for reservoir ", idam, WMUnit%StorCap(idam)
-               stop
-           end if
-        end do
-        !print*, "storage ",WMwater%pre_release(1,1), WMwater%storage(1)
-
-        ! initialize start of the operationnal year based on long term simulation
-        call WRM_init_StOp_FC
-		
-        !initialize dam dependencies
-		call MOSART_wm_read_int_1d(ncid, 'numGrid_from_Dam', WMUnit%dam_Ndepend)
-        allocate(temp2D_int(wmCTL%NDam, maxNumDependentGrid))
-        call mosart_wm_readnc_int_2D(ncid, 'gridID_from_Dam', temp2D_int, wmCTL%NDam, maxNumDependentGrid)
-        do nr=rtmCTL%begr,rtmCTL%endr
-			if(WMUnit%isDam(nr)>0) then
-                idam = WMUnit%INVicell(nr)
-                nn=idam_global(idam)
-                ntotal = 0
-                do nd=1,maxNumDependentGrid
-                    iunit = temp2D_int(nn,nd)
-                    if(iunit > 0) then
-                        n = rglo2gdc(iunit)
-                        if(n >= rtmCTL%begr .and. n <= rtmCTL%endr) then
-                            ntotal = ntotal + 1
-                            WMUnit%dam_depend(idam,ntotal) = n
-                        end if
-                    end if
-                end do
-                if(ntotal > WMUnit%dam_Ndepend(idam) .or. ntotal < WMUnit%dam_Ndepend(idam)-1) then ! sometimes in the dependency data, the basin outlet is included for a dam as its dependent grid
-                    write(strTemp,"(a,e12.6,i6,i6)"), "Attention reading gridID_from_Dam ", WMUnit%StorCap(idam),WMUnit%dam_Ndepend(idam), ntotal
-                    write(iulog,*), strTemp
-                    !call endrun
-                end if
-                WMUnit%dam_Ndepend(idam) = ntotal
-		    end if
-
-        end do
-
-	!initialize subw dependencies
-        call MOSART_read_int(ncid, 'num_Dam2Grid', WMUnit%subw_Ndepend)
-		do idam=1,rtmCTL%localNumDam
-			! need to adjust for reservoir with zero inflow, do not  need to read the remaining
-            if (WMUnit%MeanMthFlow(idam,13) <= 0._r8 .and. WMUnit%dam_Ndepend(idam) > 1) then
-                write(strTemp,"(a,i8,i8)"), "Attention: Reservoir with zero inflow while non-zero dependent grids", WMUnit%icell(idam), WMUnit%dam_Ndepend(idam)
-                write(iulog,*), strTemp
-                do nn=1,WMUnit%dam_Ndepend(idam)
-                   nr = WMUnit%dam_depend(idam,nn)
-                   if(nr >= rtmCTL%begr .and. nr <= rtmCTL%endr) then
-                       WMUnit%subw_Ndepend(nr) = WMUnit%subw_Ndepend(nr) - 1
-                   end if
-
-                end do
-
-                WMUnit%dam_Ndepend(idam) = 0 ! this reservoir will not provide water to any subw, relieve database
-            end if
-		end do
-
-	   allocate(temp1D_int(rtmCTL%begr:rtmCTL%endr))
-        temp1D_int = 0
-        do idam=1,rtmCTL%localNumDam
-            do nn=1,WMUnit%dam_Ndepend(idam)
-                nr = WMUnit%dam_depend(idam,nn)
-                if(nr >= rtmCTL%begr .and. nr <= rtmCTL%endr) then
-                    temp1D_int(nr) = temp1D_int(nr) + 1
-                    WMUnit%subw_depend(nr,temp1D_int(nr)) = inverse_INVicell(idam)
-                else
-                    write(strTemp,"(a15,i8,i6,i6)"), "Inconsistent dam_depend and subw_depend  ", rtmCTL%begr, rtmCTL%endr, nr
-                    write(iulog,*) trim(strTemp)
-                end if
-            end do
-        end do
-
-        !check the dependence database consistencies
-        do nr=rtmCTL%begr,rtmCTL%endr
-            if(.not.(temp1D_int(nr).eq.WMUnit%subw_Ndepend(nr))) then
-                write(strTemp,"(a35,i8,i6,i6)"), "Attention processing gridID_Dam2Grid ", TUnit%ID0(nr), WMUnit%subw_Ndepend(nr), temp1D_int(nr)
-                write(iulog,*) trim(strTemp)
-            end if
-
-        end do
-
-        !check the dependence database consistencies
-        do idam=1,rtmCTL%localNumDam
-           do j=1,WMUnit%dam_Ndepend(idam)
-             !if(WMUnit%dam_depend(idam,j).eq.0) then
-             !   WMUnit%dam_depend(idam,j) = WMUnit%dam_depend(idam,j) * 1
-             !end if
-             idepend = WMUnit%dam_depend(idam,j)
-             if ( idepend .lt. 0 ) then
-               print*,"Error checking dependency, zero idepend", idam, WMUnit%dam_Ndepend(idam), j, idepend , WMUnit%dam_depend(idam,j)
-               stop
-             endif
-             WMUnit%TotStorCapDepend(idepend) = WMUnit%TotStorCapDepend(idepend) + WMUnit%StorCap(idam)
-             WMUnit%TotInflowDepend(idepend) = WMUnit%TotInflowDepend(idepend) + WMUnit%MeanMthFlow(idam,13)
-           end do
-        end do
-		call check_ret(nf_close(ncid), "Reading WM parameter file")
-	end if
-	
-  end subroutine MOSART_wm_init	
-
-
-!-----------------------------------------------------------------------
-!BOP
-!
-! !IROUTINE: mosart_wm_read
-!
-! !INTERFACE:
-  subroutine MOSART_wm_read_dbl_1d(ncid, varname, var1D)
-!
-! !DESCRIPTION:
-! read 2D array from netCDF file and assign values for local grids on current pe
-!
-! !USES:
-
-! !ARGUMENTS:
-    implicit none
-!
-! !REVISION HISTORY:
-! Author: Hongyi Li
-!
-!
-! !OTHER LOCAL VARIABLES:
-!EOP
-	character(len=*), intent(in) :: varname
-	integer, intent(in) :: ncid  
-    real(r8) , pointer, intent(in) :: var1D(:)	
-	integer :: ilat, ilon, nn, n, nr, varid 
-    real(r8) ,pointer :: temp1D_nc(:), temp1D_mosart(:)       ! temporary for initialization
-
-	allocate(temp1D_nc(rtmlon*rtmlat))
-	call rtm_readnc_dbl(ncid, varname, temp1D_nc)
-	allocate(temp1D_mosart(rtmCTL%begr:rtmCTL%endr))
-    temp1D_mosart = -9999.0
-	nn = 1
-	do nr=rtmCTL%begr,rtmCTL%endr
-		n = rgdc2glo(nr)
-		temp1D_mosart(nr) = temp1D_nc(n)
-	    if(WMUnit%isDam(nr)>0) then
-		    var1D(nn) = temp1D_mosart(nr)
-			nn = nn + 1
-		end if
-	end do
-	deallocate(temp1D_nc)
-	deallocate(temp1D_mosart)	
-  end subroutine MOSART_wm_read_dbl_1d  
-  
-
-!-----------------------------------------------------------------------
-!BOP
-!
-! !IROUTINE: mosart_read
-!
-! !INTERFACE:
-  subroutine MOSART_wm_read_int_1d(ncid, varname, var1D)
-
-!
-! !DESCRIPTION:
-! read 2D array from netCDF file and assign values for local grids on current pe
-
-!
-! !USES:
-
-! !ARGUMENTS:
-    implicit none
-!
-! !REVISION HISTORY:
-! Author: Hongyi Li
-!
-!
-! !OTHER LOCAL VARIABLES:
-!EOP
-	character(len=*), intent(in) :: varname
-	integer, intent(in) :: ncid  
-    integer , pointer, intent(in) :: var1D(:)	
-	integer :: ilat, ilon, nn, n, nr, varid 
-    integer ,pointer :: temp1D_nc(:), temp1D_mosart(:)       ! temporary for initialization
-
-	allocate(temp1D_nc(rtmlon*rtmlat))
-	call rtm_readnc_int(ncid, varname, temp1D_nc)
-	allocate(temp1D_mosart(rtmCTL%begr:rtmCTL%endr))
-    temp1D_mosart = -9999
-	nn = 1
-	do nr=rtmCTL%begr,rtmCTL%endr
-		n = rgdc2glo(nr)
-		temp1D_mosart(nr) = temp1D_nc(n)
-	    if(WMUnit%isDam(nr)>0) then
-		    var1D(nn) = temp1D_mosart(nr)
-			nn = nn + 1
-		end if
-	end do
-	deallocate(temp1D_nc)
-	deallocate(temp1D_mosart)	
-	
-  end subroutine MOSART_wm_read_int_1d  
-
-!-----------------------------------------------------------------------
-!BOP
-!
-! !IROUTINE: readDemand
-!
-! !INTERFACE:
-  subroutine MosartUpdateDemand
-
-!
-! !DESCRIPTION:
-! read the demand time series for MOSART-wm
-
-!
-! !USES:
-
-! !ARGUMENTS:
-    implicit none
-!
-! !REVISION HISTORY:
-! Author: Hongyi Li 
-!
-!
-! !OTHER LOCAL VARIABLES:
-!EOP
-    integer  :: iYear, iMonth, iDay, iTOD, damID
-	character(len=4) :: strYear
-	character(len=2) :: strMonth, strDay
-    character(len=1000) :: fname
-	integer  :: ncid, nr
-
-    call get_curr_date(iYear, iMonth, iDay, iTOD)
-	WMctl%year = iYear
-	WMctl%month = iMonth
-	
-	write(strYear,'(I4.4)') iYear
-	write(strMonth,'(I2.2)') iMonth
-	WMctl%demandFile = strYear//'_'//strMonth//'.nc'
-	fname = trim(WMctl%demandPath) // trim(WMctl%demandFile)
-	call check_ret(nf_open(fname, 0, ncid), 'Reading WM demand file: ' // fname)
-	call MOSART_read_dbl(ncid, 'totalDemand', WMwater%demand0)
-    do nr=rtmCTL%begr,rtmCTL%endr
-	    if(WMwater%demand0(nr).lt.0._r8) then
-		    WMwater%demand0(nr) = 0._r8
-		end if
-	end do
-	call check_ret(nf_close(ncid), 'Reading WM demand file')
-	
-	do nr=rtmCTL%begr,rtmCTL%endr
-	    damID = WMUnit%INVicell(nr)
-		if (damID > 0) then
-		    if( WMctl%month .eq. WMUnit%MthStOp(damID) ) then
-				WMUnit%StorMthStOp(damID) = WMwater%Storage(damID)
-			end if
-		end if
-	end do
-    call RegulationRelease
-    call WRM_storage_targets
-	
-  end subroutine MosartUpdateDemand  
-  
-  subroutine TVD_wm
-	! !DESCRIPTION: solve the ODEs with TVD algorithm
-		implicit none    
-		integer :: iunit, m, k, dd, d, damID   !local index
-		real(r8) :: temp_etout(nt_rtm),temp_erout(nt_rtm), temp_haout, temp_Tt, temp_Tr,  temp_T, temp_ha, localDeltaT, error_water
-		real(r8) :: myTINYVALUE
-		
-		myTINYVALUE = 1.e-6
-		
-		do iunit=rtmCTL%begr,rtmCTL%endr
-		    if(TUnit%fdir(iunit) >= 0 .and. TUnit%areaTotal(iunit) > myTINYVALUE) then
-				call hillslopeRouting(iunit, Tctl%DeltaT)
-				TRunoff%wh(iunit,:) = TRunoff%wh(iunit,:) + TRunoff%dwh(iunit,:) * Tctl%DeltaT
-				call UpdateState_hillslope(iunit)
-				call hillslopeHeat(iunit, Tctl%DeltaT)
-			end if
-		end do			
-        
-		THeat%Tt_avg = 0._r8
-		THeat%Tr_avg = 0._r8
-		TRunoff%flow = 0._r8
-
-		WMwater%demand_avg = 0._r8
-		WMwater%supply_avg = 0._r8
-		WMwater%storage_avg = 0._r8
-
-	    do m=1,Tctl%DLevelH2R
-		    do iunit=rtmCTL%begr,rtmCTL%endr
-			    if(TUnit%fdir(iunit) >= 0 .and. TUnit%areaTotal(iunit) > myTINYVALUE) then
-					! Extraction from local tributaries, e.g., storage of the subnetwork channel
-					localDeltaT = Tctl%DeltaT/Tctl%DLevelH2R
-					call irrigationExtractionSubNetwork(iunit,localDeltaT)
-					call UpdateState_subnetwork(iunit)
-					
-					! subnetwork routing			
-					TRunoff%erlateral(iunit,:) = 0._r8
-					THeat%ha_lateral(iunit) = 0._r8
-					temp_Tt = 0._r8
-					do k=1,TUnit%numDT_t(iunit)
-						localDeltaT = Tctl%DeltaT/Tctl%DLevelH2R/TUnit%numDT_t(iunit)
-						call subnetworkRouting(iunit,localDeltaT)
-						TRunoff%dwt(iunit,:) = TRunoff%etin(iunit,:) + TRunoff%etout(iunit,:)
-						TRunoff%wt(iunit,:) = TRunoff%wt(iunit,:) + TRunoff%dwt(iunit,:) * localDeltaT
-						call UpdateState_subnetwork(iunit)
-						TRunoff%erlateral(iunit,:) = TRunoff%erlateral(iunit,:)-TRunoff%etout(iunit,:)
-
-						if(TUnit%tlen(iunit) > myTINYVALUE) then
-							if(TRunoff%yt(iunit,nliq) >= 0.2_r8) then
-								call subnetworkHeat(iunit,localDeltaT)
-								call subnetworkTemp(iunit)
-							elseif(TRunoff%yt(iunit,nliq) <= 0.05_r8) then
-								call subnetworkHeat_simple(iunit,localDeltaT)
-								THeat%Tt(iunit) = cr_S_curve(iunit,THeat%forc_t(iunit))
-							else
-								temp_T = 0._r8
-								temp_ha = 0._r8
-								do dd=1,4
-									call subnetworkHeat(iunit,localDeltaT/4._r8)
-									call subnetworkTemp(iunit)
-									temp_T = temp_T + THeat%Tt(iunit)
-									temp_ha = temp_ha + THeat%Ha_t2r(iunit)
-								end do
-								THeat%Tt(iunit) = temp_T/4._r8
-								THeat%Ha_t2r(iunit) = temp_ha/4._r8
-							end if
-							THeat%ha_lateral(iunit) = THeat%ha_lateral(iunit) - THeat%Ha_t2r(iunit)
-							temp_Tt = temp_Tt + THeat%Tt(iunit)
-						else
-							call subnetworkHeat_simple(iunit,localDeltaT)
-							call subnetworkTemp_simple(iunit)
-							THeat%ha_lateral(iunit) = THeat%ha_lateral(iunit) - THeat%Ha_t2r(iunit)
-							temp_Tt = temp_Tt + THeat%Tt(iunit)
-						end if
-					end do
-					TRunoff%erlateral(iunit,:) = TRunoff%erlateral(iunit,:) / TUnit%numDT_t(iunit)
-					THeat%ha_lateral(iunit) = THeat%ha_lateral(iunit) / TUnit%numDT_t(iunit)
-					temp_Tt = temp_Tt / TUnit%numDT_t(iunit)
-					THeat%Tt_avg(iunit) = THeat%Tt_avg(iunit) + temp_Tt
-				else
-				    THeat%Tt_avg(iunit) = THeat%Tt_avg(iunit) + THeat%Tqsur(iunit)
-				end if
-			end do
-			
-			do iunit=rtmCTL%begr,rtmCTL%endr
-			    if(TUnit%fdir(iunit) >= 0 .and. TUnit%areaTotal(iunit) > myTINYVALUE) then
-					
-					if(WMUnit%INVicell(iunit) > 0 .and. abs(WMUnit%StorCap(WMUnit%INVicell(iunit))/1e6-25000.0_r8) < 1._r8) then
-						localDeltaT = 0
-					end if
-					! extraction from local main channel storage
-					
-					if (WMctl%ExtractionMainChannelFlag > 0 .AND. WMctl%ExtractionFlag > 0 ) then
-						localDeltaT = Tctl%DeltaT/Tctl%DLevelH2R
-						call IrrigationExtractionMainChannel(iunit, localDeltaT)
-						call UpdateState_mainchannel(iunit)
-					end if
-					
-					! main channel routing				
-					temp_erout = 0._r8
-					temp_haout = 0._r8
-					temp_Tr = 0._r8
-					do k=1,TUnit%numDT_r(iunit)
-						localDeltaT = Tctl%DeltaT/Tctl%DLevelH2R/TUnit%numDT_r(iunit)
-						call mainchannelRouting(iunit,localDeltaT)		
-						TRunoff%dwr(iunit,:) = TRunoff%erlateral(iunit,:) + TRunoff%erin(iunit,:) + TRunoff%erout(iunit,:)
-						TRunoff%wr(iunit,:) = TRunoff%wr(iunit,:) + TRunoff%dwr(iunit,:) * localDeltaT
-						call UpdateState_mainchannel(iunit)
-						temp_erout = temp_erout + TRunoff%erout(iunit,:) ! erout here might be inflow to some downstream subbasin, so treat it 
-
-						if(TUnit%rlen(iunit) > myTINYVALUE) then
-							if(TRunoff%yr(iunit,nliq) >= 0.2_r8) then
-								call mainchannelHeat(iunit, localDeltaT)
-								call mainchannelTemp(iunit)
-							elseif(TRunoff%yr(iunit,nliq) <= 0.05_r8) then
-								call mainchannelHeat_simple(iunit, localDeltaT)
-								THeat%Tr(iunit) = cr_S_curve(iunit,THeat%forc_t(iunit))
-							else
-								temp_T = 0._r8
-								temp_ha = 0._r8
-								do dd=1,4
-									call mainchannelHeat(iunit, localDeltaT/4._r8)
-									call mainchannelTemp(iunit)
-									temp_T = temp_T + THeat%Tr(iunit)
-									temp_ha = temp_ha + THeat%ha_rout(iunit)
-								end do
-								THeat%Tr(iunit) = temp_T/4._r8
-								THeat%ha_rout(iunit) = temp_ha/4._r8
-							end if
-							temp_haout = temp_haout + THeat%ha_rout(iunit)
-							temp_Tr = temp_Tr + THeat%Tr(iunit)
-						else
-							call mainchannelHeat_simple(iunit, localDeltaT)
-							call mainchannelTemp_simple(iunit)
-							temp_haout = temp_haout + THeat%ha_rout(iunit)
-							temp_Tr = temp_Tr + THeat%Tr(iunit)
-						end if
-					end do
-					temp_erout = temp_erout / TUnit%numDT_r(iunit)
-					TRunoff%erout(iunit,:) = temp_erout
-					temp_haout = temp_haout / TUnit%numDT_r(iunit)
-					THeat%ha_rout(iunit) = temp_haout
-					temp_Tr = temp_Tr / TUnit%numDT_r(iunit)
-					THeat%Tr_avg(iunit) = THeat%Tr_avg(iunit) + temp_Tr
-					
-					! assuming dam is located at the downstream end of a main channel, so dam regulation after main channel routing
-					if (WMctl%ExtractionMainChannelFlag > 0 .AND. WMctl%ExtractionFlag > 0 ) then
-						localDeltaT = Tctl%DeltaT/Tctl%DLevelH2R
-						damID = WMUnit%INVicell(iunit)
-						if (WMctl%RegulationFlag > 0 .and. damID > 0 .and.  WMUnit%MeanMthFlow(damID,13) > 0.01_r8 ) then
-							call Regulation(iunit, localDeltaT)
-							if (WMctl%ExtractionFlag > 0 ) then
-								call ExtractionRegulatedFlow(iunit, localDeltaT)
-							endif
-						endif
-						
-						call reservoirHeat(iunit, localDeltaT)
-					end if		
-
-					TRunoff%flow(iunit,:) = TRunoff%flow(iunit,:) - TRunoff%erout(iunit,:)
-
-					!WMwater%demand_avg(iunit) = WMwater%demand(iunit)
-					!WMwater%supply_avg(iunit) = WMwater%supply(iunit)
-					if(WMUnit%INVicell(iunit) > 0) then
-						WMwater%storage_avg(iunit) = WMwater%storage_avg(iunit) + WMwater%storage(WMUnit%INVicell(iunit))
-					end if
-
-				else
-				    THeat%Tr_avg(iunit) = THeat%Tr_avg(iunit) + THeat%Tqsur(iunit)
-				end if
-			end do
-
-		end do
-		TRunoff%flow = TRunoff%flow / Tctl%DLevelH2R
-		THeat%Tt_avg = THeat%Tt_avg / Tctl%DLevelH2R
-		THeat%Tr_avg = THeat%Tr_avg / Tctl%DLevelH2R
-		
-		WMwater%storage_avg = WMwater%storage_avg/Tctl%DLevelH2R
-		WMwater%demand_avg = WMwater%demand/get_step_size() ! accumulation of deduction during extraction and regulation process, converting it back to m3/s
-		WMwater%supply_avg = WMwater%supply/get_step_size() ! accumulation of increasing during extraction and regulation process, converting it back to m3/s
-
-        call waterbalance_check_wm
-	end subroutine TVD_wm
-  
-!end of newly added subroutines for MOSART
-!=====================================================================================
-
 	
 #endif
 

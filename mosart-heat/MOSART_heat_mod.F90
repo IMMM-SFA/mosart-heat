@@ -53,8 +53,6 @@ MODULE MOSART_heat_mod
         
 		real(r8) :: Qsur, Qsub ! flow rate of surface and subsurface runoff separately
 		!if(TUnit%fdir(iunit) >= 0 .and. TUnit%areaTotal(iunit) > TINYVALUE .and. TUnit%tlen(iunit) >= TINYVALUE) then
-
-
 				TRunoff%tarea(iunit,nliq) = WaterAreaRatio*TUnit%twidth(iunit) * TUnit%tlen(iunit)
 				THeat%Hs_t(iunit) = cr_swrad(THeat%forc_solar(iunit), TRunoff%tarea(iunit,nliq))
 				THeat%Hl_t(iunit) = cr_lwrad(THeat%forc_lwrad(iunit), THeat%Tt(iunit), TRunoff%tarea(iunit,nliq))
@@ -66,7 +64,6 @@ MODULE MOSART_heat_mod
 				Qsub = TRunoff%qsub(iunit,nliq) * TUnit%area(iunit) * TUnit%frac(iunit)
 				THeat%Ha_h2t(iunit) = cr_advectheat(Qsur, THeat%Tqsur(iunit)) + cr_advectheat(Qsub, THeat%Tqsub(iunit))
 				THeat%Ha_t2r(iunit) = -cr_advectheat(abs(TRunoff%etout(iunit,nliq)+TRunoff%etout(iunit,nfrz)), THeat%Tt(iunit))
-
 			! change of energy due to heat exchange with the environment
 			THeat%deltaH_t(iunit) = theDeltaT * (THeat%Hs_t(iunit) + THeat%Hl_t(iunit) + THeat%He_t(iunit) + THeat%Hc_t(iunit) + THeat%Hh_t(iunit))
 			! change of energy due to advective heat flux
@@ -240,31 +237,6 @@ MODULE MOSART_heat_mod
 		
 		THeat%Tr(iunit) = THeat%Tt(iunit)
 	end subroutine mainchannelTemp_simple
-
-	subroutine reservoirHeat(iunit, theDeltaT)
-	! !DESCRIPTION: calculate the net heat balance of reservoir.
-	! simplified version as of 09/2014, to be extended later
-		implicit none
-		integer, intent(in) :: iunit
-        real(r8), intent(in) :: theDeltaT
-		if(TUnit%indexDown(iunit) > 0) then
-			THeat%Ha_rout(iunit) = -cr_advectheat(abs(TRunoff%erout(iunit,nliq)+TRunoff%erout(iunit,nfrz)), THeat%Tr(iunit))
-		else
-			THeat%Ha_rout(iunit) = 0._r8
-		end if
-        
-        		
-    end subroutine reservoirHeat	
-
-	subroutine reservoirTemp(iunit)
-	! !DESCRIPTION: calculate the water temperature of reservoir.
-	! simplified version as of 09/2014, to be extended later
-		implicit none
-		integer, intent(in) :: iunit
-        
-        		
-    end subroutine reservoirTemp	
-
 
 	function cr_swrad(Hswin_, Aw_) result(Hsw_)
 	! closure relationship for net short-wave solar radiation

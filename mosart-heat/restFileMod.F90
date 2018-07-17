@@ -831,7 +831,7 @@ contains
           call check_dim(ncid, 'pft'     , nump)
        end if
        call check_dim(ncid, 'levsno'  , nlevsno)
-       !call check_dim(ncid, 'levgrnd'  , nlevgrnd)
+       call check_dim(ncid, 'levgrnd'  , nlevgrnd)
        call check_dim(ncid, 'levlak'  , nlevlak) 
 #if (defined CASA)
        ! Dimensions should be checked, but this will only work for initial
