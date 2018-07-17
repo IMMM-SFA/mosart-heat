@@ -77,8 +77,8 @@ sbatch your_own_case.run
 The authors would like to acknowledge H. Li at University of Houston for providing MOSART-heat code, M. Huang at Pacific Northwest National Laboratory (PNNL) for sharing the PRIMA CLM4 compsets and driving scripts, Nathalie Voisin at PNNL for providing the water management code, and Mohamad Hejazi at PNNL for providing the water demand data, all supported by the Platform for Regional Integrated Modeling and Analysis (PRIMA) Initiative and the U.S. Department of Energy, Office of Science as part of research in Multi-Sector Dynamics, Earth and Environmental System Modeling Program.
 
 ## References
-Li, H.*, M. S. Wigmosta, H. Wu, M. Huang, Y. Ke, A. M. Coleman, and L. R. Leung (2013), A physically based runoff routing model for land surface and earth system models, J. of Hydromet., 14(3):808-828. doi:10.1175/JHM-D-12-015.1
+Li, H., M. S. Wigmosta, H. Wu, M. Huang, Y. Ke, A. M. Coleman, and L. R. Leung (2013), A physically based runoff routing model for land surface and earth system models, J. of Hydromet., 14(3):808-828. doi:10.1175/JHM-D-12-015.1
 
 Li, H., L. R. Leung, A Getirana, M Huang, H Wu, Y Xu, J Guo and N Voisin (2015), Evaluating Global Streamflow Simulations by a Physically-based Routing Model Coupled with the Community Land Model, J. of Hydromet., 16(2):948-971, doi: 10.1175/JHM-D-14-0079.1
 
-Li, H.-Y., L. Ruby Leung, T. Tesfa, N. Voisin, M. Hejazi, L. Liu, Y. Liu, J. Rice, H. Wu, and X. Yang (2015), Modeling stream temperature in the Anthropocene: An earth system modeling approach, J. Adv. Model. Earth Syst., 7, doi:10.1002/2015MS000471.
+Li, H., L. Ruby Leung, T. Tesfa, N. Voisin, M. Hejazi, L. Liu, Y. Liu, J. Rice, H. Wu, and X. Yang (2015), Modeling stream temperature in the Anthropocene: An earth system modeling approach, J. Adv. Model. Earth Syst., 7, doi:10.1002/2015MS000471.
