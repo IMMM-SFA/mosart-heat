@@ -1,5 +1,9 @@
 !
 MODULE MOSART_heat_mod
+! Copyright (c) 2018, Battelle Memorial Institute
+! Open source under license BSD 2-Clause - see LICENSE and DISCLAIMER
+! Point of contact: Hong-Yi Li, hongyili.jadison@gmail.com.
+! 
 ! Description: core code of MOSART. Can be incoporated within any land model via a interface module
 ! 
 ! Developed by Hongyi Li, 12/29/2011. 
