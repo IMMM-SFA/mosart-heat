@@ -33,12 +33,13 @@ If there is any error detected at this step, please work with your own technical
 
 #### Step 1: Download MOSART-heat and MOSART-wm-heat input data
 Please download the MOSART parameter files from `/pic/dtn/data/im3/Zhang_et_al_2018_data/MOSART_wm_para/`, and water demand data from `/pic/dtn/data/im3/Zhang_et_al_2018_data/GCAM_waterdemand_nc/`.  These files include:
-•	`MOSART_h_NLDAS_8th.nc`: MOSART routing parameters
-•	`US_reservoir_8th_hist.nc`: water management parameters for historical simulations
-•	`US_reservoir_8th_rcp8.5.nc`: water management parameters for RCP8.5 simulations
-•	`US_reservoir_8th_rcp4.5.nc`: water management parameters for RCP4.5 simulations
-•	`RCP4.5_GCAM_water_demand*.nc`: water demand data for RCP4.5 MOSART-wm-heat simulation (note the files dated as 1980-2004 can be used for the historical MOSART-wm-heat simulation also)
-•	`RCP8.5_GCAM_water_demand*.nc`: water demand data for RCP8.5 MOSART-wm-heat simulation
+
+-	`MOSART_h_NLDAS_8th.nc`: MOSART routing parameters
+-	`US_reservoir_8th_hist.nc`: water management parameters for historical simulations
+-	`US_reservoir_8th_rcp8.5.nc`: water management parameters for RCP8.5 simulations
+-	`US_reservoir_8th_rcp4.5.nc`: water management parameters for RCP4.5 simulations
+-	`RCP4.5_GCAM_water_demand*.nc`: water demand data for RCP4.5 MOSART-wm-heat simulation (note the files dated as 1980-2004 can be used for the historical MOSART-wm-heat simulation also)
+-	`RCP8.5_GCAM_water_demand*.nc`: water demand data for RCP8.5 MOSART-wm-heat simulation
 
 #### Step 2: Obtain and use MOSART-heat and MOSART-wm-heat source code
 Please download and use the MOSART-heat source code for your stream temperature simulations under natural conditions, and the MOSART-wm-heat source code for your stream temperature simulations under water management. Once downloaded, copy the source code to your own CLM4 case directory (e.g., $CASE_DIR/clm4_nldas_hist) into the subfolder SourceMod/src.clm (i.e., $CASE_DIR/clm4_nldas_hist/ SourceMods/src.clm).
