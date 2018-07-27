@@ -36,7 +36,7 @@ If there is any error detected at this step, please work with your own technical
 ### Running MOSART-Heat
 
 #### Step 1: Download MOSART-heat and MOSART-wm-heat input data
-The `data` directory of this repository should be unzipped and contains the `MOSART_wm_para` and `GCAM_waterdemand_nc` directories which house the MOSART parameter files and the water demand data, respectively.  
+The `zhang_et_al_2018_data.zip` file in the `data` directory of this repository should be unzipped and contains the `MOSART_wm_para` and `GCAM_waterdemand_nc` directories which house the MOSART parameter files and the water demand data, respectively.  
 These files include:
 
 -	`MOSART_h_NLDAS_8th.nc`: MOSART routing parameters
