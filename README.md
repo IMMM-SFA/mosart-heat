@@ -4,6 +4,10 @@ A large-scale stream temperature model
 ## Current Version
 This is where I will put your DOI tag once all has been finalized
 
+## Notice
+This repository uses the Git Large File Storage (LFS) extension (see https://git-lfs.github.com/ for details).  Please download GitLFS and install then run the following command before cloning if you do not already have Git LFS installed:
+`git lfs install`.
+
 ## Contact
 For questions please contact:
 
@@ -32,7 +36,8 @@ If there is any error detected at this step, please work with your own technical
 ### Running MOSART-Heat
 
 #### Step 1: Download MOSART-heat and MOSART-wm-heat input data
-Please download the MOSART parameter files from `/pic/dtn/data/im3/Zhang_et_al_2018_data/MOSART_wm_para/`, and water demand data from `/pic/dtn/data/im3/Zhang_et_al_2018_data/GCAM_waterdemand_nc/`.  These files include:
+The `data` directory of this repository should be unzipped and contains the `MOSART_wm_para` and `GCAM_waterdemand_nc` directories which house the MOSART parameter files and the water demand data, respectively.  
+These files include:
 
 -	`MOSART_h_NLDAS_8th.nc`: MOSART routing parameters
 -	`US_reservoir_8th_hist.nc`: water management parameters for historical simulations
