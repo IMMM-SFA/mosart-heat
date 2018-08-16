@@ -2,7 +2,8 @@
 A large-scale stream temperature model
 
 ## Current Version
-This is where I will put your DOI tag once all has been finalized.
+[![DOI](https://zenodo.org/badge/140293931.svg)](https://zenodo.org/badge/latestdoi/140293931)
+
 Note that the version including the representation of water management is associated with the 2013 version of the WM code available at https://github.com/IMMM-SFA/wm and associated with the following DOI https://doi.org/10.5281/zenodo.1225344. 
 
 ## Notice
