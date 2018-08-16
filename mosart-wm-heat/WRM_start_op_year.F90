@@ -1,8 +1,12 @@
-! Part of water management source code
+!Copyright (c) 2018, Battelle Memorial Institute
+!Open source under license BSD 2-Clause - see LICENSE and DISCLAIMER
+
+
+! Part of water management source code, 2013 version
 ! For complete information about the water management source code, please refer to https://github.com/IMMM-SFA/wm and https://zenodo.org/badge/latestdoi/130248784
 ! The code was developed : Voisin, N., Li, H., Ward, D., Huang, M., Wigmosta, M., and Leung, L. R., 2013: On an improved sub-regional water resources management representation for integration into earth system models, Hydrol. Earth Syst. Sci., 17, 3605-3622, doi:10.5194/hess-17-3605-2013, 2013
-! The dataset and model set ups were used in : Hejazi MI, N Voisin, L Liu, LM Bramer, DC Fortin, JE Hathaway, M Huang, GP Kyle, LYR Leung, H Li, Y Liu, PL Patel, TC Pulsipher, JS Rice, TK Tesfa, CR Vernon, and Y Zhou. 2015. "21st Century United States Emissions Mitigation Could Increase Water Stress more than the Climate Change it is Mitigating." Proceedings of the National Academy of Sciences of the United States of America 112(34):10635-10640. doi:10.1073/pnas.1421675112
-!
+! POC: nathaiie.voisin@pnnl.gov
+
 MODULE WRM_start_op_year 
 ! Description: module to determine the start month of operation year for the WRM mmodel
 ! 

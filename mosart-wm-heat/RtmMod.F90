@@ -3167,15 +3167,26 @@ end if
 
 !-----------------------------------------------------------------------
 !BOP
+!Copyright (c) 2018, Battelle Memorial Institute
+!Open source under license BSD 2-Clause - see LICENSE and DISCLAIMER
+
+
+! Part of water management source code, 2013 version
+! For complete information about the water management source code, please refer
+! to https://github.com/IMMM-SFA/wm and
+! https://zenodo.org/badge/latestdoi/130248784
+! The code was developed : Voisin, N., Li, H., Ward, D., Huang, M., Wigmosta,
+! M., and Leung, L. R., 2013: On an improved sub-regional water resources
+! management representation for integration into earth system models, Hydrol.
+! Earth Syst. Sci., 17, 3605-3622, doi:10.5194/hess-17-3605-2013, 2013
+! POC: nathaiie.voisin@pnnl.gov
+
 !
 ! !IROUTINE: 
 !
 ! !INTERFACE:
   subroutine MOSART_wm_init
 !
-! Developed by Hong-Yi Li 07/15/2014
-! !REVISION HISTORY:
-! 
 
 ! !DESCRIPTION:
 ! initialize MOSART_wm variables
@@ -3185,7 +3196,7 @@ end if
     implicit none
 !
 ! !REVISION HISTORY:
-! Author: Hongyi Li
+! Author: Nathalie Voisin, adapted by Hongyi Li to the CLM4 environment
 !
 !
 ! !OTHER LOCAL VARIABLES:
@@ -3655,6 +3666,20 @@ end if
 
 !-----------------------------------------------------------------------
 !BOP
+!Copyright (c) 2018, Battelle Memorial Institute
+!Open source under license BSD 2-Clause - see LICENSE and DISCLAIMER
+
+
+! Part of water management source code, 2013 version
+! For complete information about the water management source code, please refer
+! to https://github.com/IMMM-SFA/wm and
+! https://zenodo.org/badge/latestdoi/130248784
+! The code was developed : Voisin, N., Li, H., Ward, D., Huang, M., Wigmosta,
+! M., and Leung, L. R., 2013: On an improved sub-regional water resources
+! management representation for integration into earth system models, Hydrol.
+! Earth Syst. Sci., 17, 3605-3622, doi:10.5194/hess-17-3605-2013, 2013
+! POC: nathaiie.voisin@pnnl.gov
+
 !
 ! !IROUTINE: readDemand
 !
@@ -3672,7 +3697,7 @@ end if
     implicit none
 !
 ! !REVISION HISTORY:
-! Author: Hongyi Li 
+! Author: Nathalie Voisin, adapted by Hongyi Li  for the CLM4 environment
 !
 !
 ! !OTHER LOCAL VARIABLES:
