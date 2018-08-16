@@ -2,7 +2,7 @@
 A large-scale stream temperature model
 
 ## Current Version
-This is where I will put your DOI tag once all has been finalized
+This is where I will put your DOI tag once all has been finalized.
 Note that the version including the representation of water management is associated with the 2013 version of the WM code available at https://github.com/IMMM-SFA/wm and associated with the following DOI https://doi.org/10.5281/zenodo.1225344. 
 
 ## Notice
@@ -40,14 +40,17 @@ If there is any error detected at this step, please work with your own technical
 The `zhang_et_al_2018_data.zip` file in the `data` directory of this repository should be unzipped and contains the `MOSART_wm_para` and `GCAM_waterdemand_nc` directories which house the MOSART and WM parameter files and the water demand data, respectively.  
 These files include:
 
+MOSART-heat only:
 -	`MOSART_h_NLDAS_8th.nc`: MOSART routing parameters
--	`US_reservoir_8th_hist.nc`: water management parameters for historical simulations
+
+MOSART-WM-heat:
+-	`US_reservoir_8th_hist.nc`: water management parameters for historical simulations 
 -	`US_reservoir_8th_rcp8.5.nc`: water management parameters for RCP8.5 simulations
 -	`US_reservoir_8th_rcp4.5.nc`: water management parameters for RCP4.5 simulations
--	`RCP4.5_GCAM_water_demand*.nc`: water demand data for RCP4.5 MOSART-wm-heat simulation (note the files dated as 1980-2004 can be used for the historical MOSART-wm-heat simulation also)
--	`RCP8.5_GCAM_water_demand*.nc`: water demand data for RCP8.5 MOSART-wm-heat simulation
+-	`RCP4.5_GCAM_water_demand*.nc`: water demand data for RCP4.5 MOSART-wm-heat simulation. Note the files dated as 1980-2004 can be used for the historical MOSART-wm-heat simulation also)
+-	`RCP8.5_GCAM_water_demand*.nc`: water demand data for RCP8.5 MOSART-wm-heat simulation. 
 
-Please note that those reservoir and water demands input parameter files were created and used in Hejazi et al. (2015) and any further use should be properly cited. "We used the MOSART and WM set ups developed and used in Hejazi et al. (2015). Readers can find more details in Li et al. (2013) for MOSART and Voisin et al. (2013) for WM on how to derive those parameters. 
+Please note that those reservoir and water demands input parameter files were created and used in Hejazi et al. (2015) and any further use should be properly cited. Please refer to Voisin et al. (2013a) for the derivation of reservoir parameters, Voisin et al. (2013b) for the validation of historical GCAM water demand and WM-GCAM coupling,  and Hejazi et al. (2015) for more details on the US-CONUS validation and simulations under RCP4.5 and RCP8.5 conditions. 
 
 #### Step 2: Obtain and use MOSART-heat and MOSART-wm-heat source code
 Please download and use the MOSART-heat source code for your stream temperature simulations under natural conditions, and the MOSART-wm-heat source code for your stream temperature simulations under water management. Once downloaded, copy the source code to your own CLM4 case directory (e.g., $CASE_DIR/clm4_nldas_hist) into the subfolder SourceMod/src.clm (i.e., $CASE_DIR/clm4_nldas_hist/ SourceMods/src.clm).
@@ -92,7 +95,9 @@ Li, H., L. R. Leung, A Getirana, M Huang, H Wu, Y Xu, J Guo and N Voisin (2015),
 
 Li, H., L. Ruby Leung, T. Tesfa, N. Voisin, M. Hejazi, L. Liu, Y. Liu, J. Rice, H. Wu, and X. Yang (2015), Modeling stream temperature in the Anthropocene: An earth system modeling approach, J. Adv. Model. Earth Syst., 7, doi:10.1002/2015MS000471.
 
-Voisin, N., Li, H., Ward, D., Huang, M., Wigmosta, M., and Leung, L. R., 2013: On an improved sub-regional water resources management representation for integration into earth system models, Hydrol. Earth Syst. Sci., 17, 3605-3622, doi:10.5194/hess-17-3605-2013, 2013
+Voisin, N., Li, H., Ward, D., Huang, M., Wigmosta, M., and Leung, L. R., 2013a: On an improved sub-regional water resources management representation for integration into earth system models, Hydrol. Earth Syst. Sci., 17, 3605-3622, doi:10.5194/hess-17-3605-2013, 2013
+
+Voisin, N., Liu, L., Hejazi, M., Tesfa, T., Li, H., Huang, M., Liu, Y., and Leung, R. L., 2013b: One-way coupling of an integrated assessment model and a water resources model: evaluation and implications of future changes over the US Midwest, Hydrology and Earth System Sciences 17(No. 11):4555-4575.  doi:10.5194/hess-17-4555-2013
 
 Hejazi MI, N Voisin, L Liu, LM Bramer, DC Fortin, JE Hathaway, M Huang, GP Kyle, LYR Leung, H Li, Y Liu, PL Patel, TC Pulsipher, JS Rice, TK Tesfa, CR Vernon, and Y Zhou.  2015.  "21st Century United States Emissions Mitigation Could Increase Water Stress more than the Climate Change it is Mitigating."  Proceedings of the National Academy of Sciences of the United States of America 112(34):10635-10640.  doi:10.1073/pnas.1421675112
 
