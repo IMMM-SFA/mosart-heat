@@ -4,7 +4,7 @@ A large-scale stream temperature model
 ## Current Version
 [![DOI](https://zenodo.org/badge/140293931.svg)](https://zenodo.org/badge/latestdoi/140293931)
 
-Note that the version including the representation of water management is associated with the 2013 version of the WM code available at https://github.com/IMMM-SFA/wm and associated with the following DOI https://doi.org/10.5281/zenodo.1225344. 
+Note that the version including the representation of water management is associated with the 2013 version of the WM code available at https://github.com/IMMM-SFA/wm and associated with the following DOI https://doi.org/10.5281/zenodo.1225344.
 
 ## Notice
 This repository uses the Git Large File Storage (LFS) extension (see https://git-lfs.github.com/ for details).  Please download GitLFS and install then run the following command before cloning if you do not already have Git LFS installed:
@@ -13,7 +13,7 @@ This repository uses the Git Large File Storage (LFS) extension (see https://git
 ## Contact
 For questions please contact:
 
-Hongyi Li: hongyili.jadison@gmail.com
+Hongyi Li: hongyili.jadison at gmail.com
 
 ## Overview
 MOSART was developed as a scalable framework for representing and studying riverine dynamics of water, energy, and biogeochemistry cycles across local, regional and global scales from an integrated human-earth system perspective (Li et al., 2013). In particular, a dam/reservoir module has been embedded within MOSART (denoted as MOSART-WM) to simulate the effects of dam operations as well as surface-water withdrawal on downstream flow and water temperature across a range of spatial scales (Voisin et al. 2013; also available at https://github.com/IMMM-SFA/wm). Here, an energy-balance based stream temperature module was added on top of MOSART only (denoted as MOSART-heat) for the simulation of stream temperature in natural river systems and on top of MOSART-wm (denoted as MOSART-wm-heat) for the simulation of stream temperature in managed river systems. For more details about MOSART-wm-heat, please refer to Li et al. (2015).
@@ -33,7 +33,7 @@ A successful compiling does not warrant running CLM4 smoothly. Please do a test 
 cd $CASE_DIR/your_own_case
 sbatch your_own_case.runs
 ```
-If there is any error detected at this step, please work with your own technical support or contact Maoyi Huang (maoyi.huang@pnnl.gov) for help. Please DO NOT proceed until your CLM4 test run here can be completed successfully.
+If there is any error detected at this step, please work with your own technical support or contact Maoyi Huang (maoyi.huang at pnnl.gov) for help. Please DO NOT proceed until your CLM4 test run here can be completed successfully.
 
 ### Running MOSART-Heat and MOSART-wm-heat
 
@@ -45,13 +45,13 @@ MOSART-heat only:
 -	`MOSART_h_NLDAS_8th.nc`: MOSART routing parameters
 
 MOSART-WM-heat:
--	`US_reservoir_8th_hist.nc`: water management parameters for historical simulations 
+-	`US_reservoir_8th_hist.nc`: water management parameters for historical simulations
 -	`US_reservoir_8th_rcp8.5.nc`: water management parameters for RCP8.5 simulations
 -	`US_reservoir_8th_rcp4.5.nc`: water management parameters for RCP4.5 simulations
 -	`RCP4.5_GCAM_water_demand*.nc`: water demand data for RCP4.5 MOSART-wm-heat simulation. Note the files dated as 1980-2004 can be used for the historical MOSART-wm-heat simulation also)
--	`RCP8.5_GCAM_water_demand*.nc`: water demand data for RCP8.5 MOSART-wm-heat simulation. 
+-	`RCP8.5_GCAM_water_demand*.nc`: water demand data for RCP8.5 MOSART-wm-heat simulation.
 
-Please note that those reservoir and water demands input parameter files were created and used in Hejazi et al. (2015) and any further use should be properly cited. Please refer to Voisin et al. (2013a) for the derivation of reservoir parameters, Voisin et al. (2013b) for the validation of historical GCAM water demand and WM-GCAM coupling,  and Hejazi et al. (2015) for more details on the US-CONUS validation and simulations under RCP4.5 and RCP8.5 conditions. 
+Please note that those reservoir and water demands input parameter files were created and used in Hejazi et al. (2015) and any further use should be properly cited. Please refer to Voisin et al. (2013a) for the derivation of reservoir parameters, Voisin et al. (2013b) for the validation of historical GCAM water demand and WM-GCAM coupling,  and Hejazi et al. (2015) for more details on the US-CONUS validation and simulations under RCP4.5 and RCP8.5 conditions.
 
 #### Step 2: Obtain and use MOSART-heat and MOSART-wm-heat source code
 Please download and use the MOSART-heat source code for your stream temperature simulations under natural conditions, and the MOSART-wm-heat source code for your stream temperature simulations under water management. Once downloaded, copy the source code to your own CLM4 case directory (e.g., $CASE_DIR/clm4_nldas_hist) into the subfolder SourceMod/src.clm (i.e., $CASE_DIR/clm4_nldas_hist/ SourceMods/src.clm).
